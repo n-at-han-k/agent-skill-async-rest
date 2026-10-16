@@ -13,8 +13,9 @@
         pkgs = nixpkgs.legacyPackages.${system};
         lib = mine.lib.${system};
 
-        # bundlerEnv evaluates the gemspec, which reads lib/async/firefly/version.rb. Only
-        # those two files are copied in, so editing the library does not rebuild the gems.
+        # bundlerEnv evaluates the gemspec, so it needs the gemspec and the version it reads.
+        # The gemspec parses lib/async/firefly/version.rb rather than requiring it, so only
+        # the gemspec itself is copied and no second copy of the library reaches the load path.
         gemspecFiles = pkgs.runCommand "async-firefly-gemspec" { } ''
           mkdir -p $out/lib/async/firefly
           cp ${./async-firefly.gemspec}         $out/async-firefly.gemspec
@@ -42,7 +43,19 @@
             export BUNDLE_FORCE_RUBY_PLATFORM=true
             export BUNDLE_GEMFILE="$PWD/Gemfile"
             export BUNDLE_FROZEN=false
+
+            export LANG="''${LANG:-C.UTF-8}"
+            export LC_ALL="''${LC_ALL:-$LANG}"
+
+            # This gem is not in the bundle — it is the repository — so put this lib/ and
+            # fixtures/ on the load path and let `require "async/firefly"` find the working tree.
             export RUBYLIB="$PWD/lib:$PWD/fixtures''${RUBYLIB:+:$RUBYLIB}"
+
+            # A sibling checkout of async-rest takes precedence, so the gem can be read and
+            # changed alongside the client that depends on it.
+            if [ -d "$PWD/../async-rest/lib" ]; then
+              export RUBYLIB="$PWD/../async-rest/lib:$RUBYLIB"
+            fi
           '';
         };
       }

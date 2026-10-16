@@ -32,7 +32,7 @@ module Async
 				return to_enum unless block_given?
 
 				Array(self.data).each do |record|
-					resource = @resource.with(path: "../transactions/#{::Protocol::URL::Encoding.escape(record[:id].to_s)}")
+					resource = @resource.with(path: "../transactions/#{::Protocol::URL::Encoding.escape(record[:id].to_s)}", parameters: nil, merge: false)
 
 					yield Transaction.new(resource, value: {data: record}, metadata: self.metadata)
 				end

@@ -12,14 +12,14 @@ describe Async::Firefly::Client do
 		it "requests the versioned path and authenticates" do
 			respond("GET", "/api/v1/about", body: {data: {version: "6.1.0", api_version: "2.0.0"}})
 
-			expect(client.about.version).to be == "6.1.0"
+			expect(firefly.about.version).to be == "6.1.0"
 
 			expect(requests.first).to have_keys(
 				method: be == "GET",
 				path: be == "/api/v1/about",
 			)
 
-			expect(requests.first[:headers]["authorization"]).to be == ["Bearer test-token"]
+			expect(requests.first[:headers]["authorization"]).to be == "Bearer test-token"
 			expect(requests.first[:headers]["user-agent"]).to be(:include?, "async-firefly")
 		end
 	end
@@ -29,7 +29,7 @@ describe Async::Firefly::Client do
 			respond("GET", "/api/v1/about", status: 500, body: {message: "broken"})
 
 			expect do
-				client.about.version
+				firefly.about.version
 			end.to raise_exception(Async::REST::ResponseError)
 		end
 	end
@@ -38,7 +38,7 @@ describe Async::Firefly::Client do
 		it "sends the split and returns the transaction" do
 			respond("POST", "/api/v1/transactions", body: {data: {id: "42", attributes: {group_title: "groceries"}}})
 
-			transaction = client.create_transaction({amount: "1.23", description: "milk"})
+			transaction = firefly.create_transaction({amount: "1.23", description: "milk"})
 
 			expect(transaction.id).to be == "42"
 			expect(transaction.group_title).to be == "groceries"
@@ -56,7 +56,7 @@ describe Async::Firefly::Client do
 				body: {message: "Duplicate of transaction #17."})
 
 			expect do
-				client.create_transaction({amount: "1.23"})
+				firefly.create_transaction({amount: "1.23"})
 			end.to raise_exception(Async::Firefly::Duplicate)
 		end
 
@@ -64,7 +64,7 @@ describe Async::Firefly::Client do
 			respond("POST", "/api/v1/transactions", status: 422, body: {message: "amount is required"})
 
 			expect do
-				client.create_transaction({})
+				firefly.create_transaction({})
 			end.to raise_exception(Async::Firefly::Failure)
 		end
 	end

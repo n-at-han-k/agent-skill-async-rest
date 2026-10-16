@@ -3,11 +3,11 @@
 # Released under the MIT License.
 # Copyright, 2026, by Nathan Kidd.
 
-require_relative "lib/async/firefly/version"
+version = File.read(File.expand_path("lib/async/firefly/version.rb", __dir__))[/VERSION = "([^"]+)"/, 1]
 
 Gem::Specification.new do |spec|
   spec.name = "async-firefly"
-  spec.version = Async::Firefly::VERSION
+  spec.version = version
   spec.authors = ["Nathan Kidd"]
   spec.email = ["nathankidd@hey.com"]
   spec.license = "MIT"
@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = spec.homepage
 
   spec.files = Dir.glob(
-    ["lib/**/*", "license.md", "readme.md"],
+    ["lib/**/*", "license.md"],
     File::FNM_DOTMATCH,
     base: __dir__,
   )

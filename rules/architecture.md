@@ -516,3 +516,89 @@ each page as its own representation keeps every value paired with the metadata t
 it, and `take(2)` still costs one request, so network efficiency (§2.3.1.3 — "reduction of the
 frequency of network interactions in relation to user actions") is preserved without a
 representation having to lie about what it holds.
+
+---
+
+# 27. Independent Identifier Rule
+
+**A child derived from a collection carries none of the collection's parameters. Pass both
+`parameters: nil` and `merge: false` when deriving it.**
+
+```ruby
+# WRONG - the collection's filter and paging follow the child
+class AccountPage < Representation
+	include Enumerable
+
+	def each
+		return to_enum unless block_given?
+
+		Array(self.data).each do |record|
+			resource = @resource.with(path: "../accounts/#{record[:id]}")
+
+			yield Account.new(resource, value: {data: record}, metadata: self.metadata)
+		end
+	end
+end
+
+Client.open("https://firefly.example.com/api/v1/") do |client|
+	account = client.accounts(type: "asset").first
+
+	account.resource.reference.to_s
+	# => "/api/v1/accounts/7?type=asset&page=1&limit=100"
+
+	# so re-reading the account sends the collection's paging to a single-account endpoint
+	Account.new(account.resource).name
+end
+```
+
+```ruby
+# RIGHT - the child is identified on its own terms
+class AccountPage < Representation
+	include Enumerable
+
+	def each
+		return to_enum unless block_given?
+
+		Array(self.data).each do |record|
+			resource = @resource.with(path: "../accounts/#{record[:id]}", parameters: nil, merge: false)
+
+			yield Account.new(resource, value: {data: record}, metadata: self.metadata)
+		end
+	end
+end
+
+Client.open("https://firefly.example.com/api/v1/") do |client|
+	account = client.accounts(type: "asset").first
+
+	account.resource.reference.to_s
+	# => "/api/v1/accounts/7"
+
+	Account.new(account.resource).name
+end
+```
+
+**Reason:** §5.2.1.1 — a mapping to "the paper published in the proceedings of conference X"
+and one to the "authors' preferred version" are "two distinct resources, even if they both map
+to the same value at some point in time. The distinction is necessary so that both resources
+can be identified and referenced independently." A collection and one of its members are two
+such resources, so the member's identifier cannot be the collection's identifier with a path
+appended.
+
+**Consequence:** both arguments are needed, because neither alone clears the query.
+`Reference#with` takes `parameters: false` as its "none given" sentinel, which is distinct from
+`nil`, and `merge: true` by default:
+
+```
+starting reference: "/api/v1/accounts?type=asset&page=1"
+
+with(path: "7")                                  => "/api/v1/accounts/7?type=asset&page=1"
+with(path: "7", parameters: nil)                 => "/api/v1/accounts/7?type=asset&page=1"
+with(path: "7", merge: false)                    => "/api/v1/accounts/7?type=asset&page=1"
+with(path: "7", parameters: nil, merge: false)   => "/api/v1/accounts/7"
+```
+
+`merge: false` alone keeps the existing parameters, because replace mode with nothing to
+replace them with falls back to them. `parameters: nil` alone is restored by merge mode. The
+merging default is deliberate and load-bearing — it is what lets rule 28 put a credential in a header or the
+query once and have every later derivation carry it — which is exactly why a derivation to a
+different resource has to opt out.

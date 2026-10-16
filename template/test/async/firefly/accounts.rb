@@ -21,7 +21,7 @@ describe Async::Firefly::Accounts do
 	it "yields an account representation per record" do
 		respond_pages
 
-		accounts = client.accounts.to_a
+		accounts = firefly.accounts.to_a
 
 		expect(accounts.size).to be == 2
 		expect(accounts.first).to be_a(Async::Firefly::Account)
@@ -31,7 +31,7 @@ describe Async::Firefly::Accounts do
 	it "seeds each account so listing costs one request" do
 		respond_pages
 
-		client.accounts.map(&:name)
+		firefly.accounts.map(&:name)
 
 		expect(requests.size).to be == 1
 	end
@@ -39,7 +39,7 @@ describe Async::Firefly::Accounts do
 	it "sends the type and the page parameters" do
 		respond_pages
 
-		client.accounts(type: "expense").to_a
+		firefly.accounts(type: "expense").to_a
 
 		expect(requests.first[:query]).to have_keys(
 			type: be == "expense",
@@ -52,7 +52,7 @@ describe Async::Firefly::Accounts do
 		it "carries the metadata describing its own response" do
 			respond_pages
 
-			page = client.accounts.each_page.first
+			page = firefly.accounts.each_page.first
 
 			expect(page).to be_a(Async::Firefly::AccountPage)
 			expect(page.total_pages).to be == 1
