@@ -1,8 +1,8 @@
 # Definitions
 
 Rules for building an `async-rest` client. Each rule states what must be true, shows wrong
-and right code with its usage, and gives the reason from Fielding's dissertation in
-`../refs/rest-dissertation/` or from the HTTP specification.
+and right code with its usage, and gives the reason from Fielding's dissertation (cited
+by section) or from the HTTP specification.
 
 Rules 1-3 define the three things a client handles. Everything after them depends on those
 definitions. Cite rule numbers when reviewing.

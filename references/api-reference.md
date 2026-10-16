@@ -109,7 +109,7 @@ An opt-in mixin; writes are not available on instances unless you include it.
 ## Wrapper::Generic
 
 `Async::REST::Wrapper::Generic` is the base for all wrappers. Override the two hooks; leave
-the lifecycle alone unless you need retry behaviour.
+the lifecycle alone. Rule 21 requires `response_for` to perform exactly one request.
 
 | Member | Description |
 |---|---|
@@ -118,7 +118,7 @@ the lifecycle alone unless you need retry behaviour.
 | `#parser_for(response)` | **Override this.** Return a `Protocol::HTTP::Body::Wrapper` subclass to parse the body, or `nil` to leave it as-is. The default returns `nil`. |
 | `#process_response(request, response)` | Calls `wrap_response`. Override to validate a response — raising on an unexpected content type, for instance. |
 | `#wrap_response(response)` | Replaces `response.body` with `parser_for(response).new(body)`, but only when a parser is found and a body is present. |
-| `#response_for(resource, request)` | Sends the request, and on a `429` with a `retry-after` header sleeps and retries in a loop. A `429` without that header is returned unchanged. Override for body-based or header-based rate limits. |
+| `#response_for(resource, request)` | Sends the request, and on a `429` with a `retry-after` header sleeps and retries in a loop. The replayed request is corrupted (rule 23), so rule 21 requires overriding this to perform exactly one request; retry belongs in the client method (rule 20). |
 | `#retry_after_duration(value)` | Parses `retry-after` as an HTTP-date (clamped at `0`) or, failing that, as a float number of seconds. |
 | `Generic::Unsupported` | A body wrapper whose `#join` raises `UnsupportedError`. Return it from `parser_for` to make a content type explicitly unreadable. |
 
