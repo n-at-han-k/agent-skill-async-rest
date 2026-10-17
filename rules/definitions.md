@@ -434,54 +434,6 @@ and one accessor returns all of them:
 
 ```
 etag           -> Protocol::HTTP::Header::ETag          "\"/nathan
-  ⎿  Allowed by auto mode classifier
-
-● Works. Replacing the weakness section with the extension, and correcting the false claim about unmodelled fields.
-
-● Bash(SP=/tmp/claude-1001/-home-nathan/20f096b5-2657-4da9-badc-503b1d8afe47/scratchpad
-      cd ~/usb/agent-skill-async-rest 2>/dev/null…)
-  ⎿  rules/metadata-access.md: 131 lines
-
-       1:# Metadata Access Rule
-     … +7 lines (ctrl+o to expand)
-  ⎿  Allowed by auto mode classifier
-
-● Replaced. The file now ends with working code instead of a caveat.
-
-  Two corrections went in:
-
-  The weakness claim was factually wrong. I said an unmodelled field "returns a bare String". It returns
-  Header::Generic, because POLICY has default = Header::Generic, and that's an Array subclass. So coverage was never
-  the gap.
-
-  The actual gap is narrower and fixable, and the file now shows how: Generic accumulates repeats, which is right for a
-  list-valued field and wrong for a singleton. So when your standard defines a field as one value, or defines a
-  syntax, you register a policy — a class with self.parse and self.coerce, keyed by lowercase field name:
-
-  Protocol::HTTP::Headers::POLICY["x-ratelimit-remaining"] = Async::Example::Header::Count
-
-  Tested before writing it:
-
-  single value    -> Async::Example::Header::Count   to_i: 42
-  after duplicate -> ["42", "41"]                    to_i: 41
-
-  to_i taking the last value is the singleton rule from the standard expressed once, in the field's class, instead of
-  at every call site — which is the same reason the rule exists at all.
-
-  I also kept the operational constraints that make it usable rather than aspirational: register at require time before
-  any request, POLICY is a plain unfrozen Hash, the registration is process-global, and don't override a field
-  protocol-http already defines unless your standard genuinely differs from the RFC.
-
-  rules/metadata-access.md is 131 lines: the rule, the wrong/right pair, why it's the only correct handling, and the
-  extension. Still carrying the dependency note at the top, since it presumes Representation and Resource — neither
-  agreed.
-
-✻ Cooked for 1m 21s · done 22:50
-
-───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-❯ 
-───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  ⏵⏵ auto mode on (shift+tab to cycle) · ← 5 agentsv1\""
 content-type   -> String                                "application/json"
 cache-control  -> Protocol::HTTP::Header::CacheControl  ["no-store"]
 accept         -> Protocol::HTTP::Header::Accept        ["application/json", "text/html"]
